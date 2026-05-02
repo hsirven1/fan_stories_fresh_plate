@@ -158,8 +158,12 @@ const downloadPngBlob = (blob, filename = "freshplate-2025-wrapped.png") => {
 };
 
 const SHARE_EXPORT_BG = "#0A0A0A";
+/** Logical size (all drawing uses this coordinate space). */
 const SHARE_CANVAS_W = 390;
 const SHARE_CANVAS_H = 720;
+/** Physical pixel size @2x for sharp exports. */
+const SHARE_CANVAS_PIXEL_W = 780;
+const SHARE_CANVAS_PIXEL_H = 1440;
 
 function loadImageCors(src) {
   return new Promise((resolve, reject) => {
@@ -199,10 +203,13 @@ async function buildFreshPlateSharePngBlob(data, profile, shoppingTimeSavedHours
   const hero = await loadImageCors(FAVORITE_MEAL_HERO_IMAGE);
 
   const canvas = document.createElement("canvas");
-  canvas.width = SHARE_CANVAS_W;
-  canvas.height = SHARE_CANVAS_H;
+  canvas.width = SHARE_CANVAS_PIXEL_W;
+  canvas.height = SHARE_CANVAS_PIXEL_H;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas not supported");
+  ctx.scale(2, 2);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
 
   ctx.fillStyle = SHARE_EXPORT_BG;
   ctx.fillRect(0, 0, SHARE_CANVAS_W, SHARE_CANVAS_H);
@@ -329,7 +336,9 @@ async function buildFreshPlateSharePngBlob(data, profile, shoppingTimeSavedHours
   ctx.fillText("#FreshPlate2025", SHARE_CANVAS_W - pad, y);
 
   const bannerH = 96;
-  const bannerY = SHARE_CANVAS_H - bannerH;
+  /** Lift banner above bottom so IG captions / UI don’t cover it (~80px clear band). */
+  const bannerBottomMargin = 80;
+  const bannerY = SHARE_CANVAS_H - bannerH - bannerBottomMargin;
   ctx.fillStyle = PALETTE.terracotta;
   ctx.fillRect(0, bannerY, SHARE_CANVAS_W, bannerH);
 
