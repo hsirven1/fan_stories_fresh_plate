@@ -1,4 +1,6 @@
 import { useState, useRef, useId } from "react";
+import { flushSync } from "react-dom";
+import html2canvas from "html2canvas";
 
 const WRAPPED_DATA = {
   meals: 87,
@@ -36,55 +38,111 @@ const PROFILE_CONTENT = {
     title: "THE GASTRONAUT",
     body:
       "You treat your kitchen like a tasting menu—technique-forward, flavor-obsessed, and never boring. This year you plated ambition on every night you cooked.",
+    shareSummary:
+      "Technique-forward and flavor-obsessed—you plated ambition on every night you cooked, tasting-menu style.",
   },
   healthy_hustler: {
     title: "THE HEALTHY HUSTLER",
     body:
       "Nutrition meets momentum: you balanced macros between meetings and still found time to chop, steam, and season like it matters—because it does.",
+    shareSummary:
+      "You balanced macros between meetings and still seasoned every meal like it matters—because it does.",
   },
   world_explorer: {
     title: "THE WORLD EXPLORER",
     body:
       "Your stove became a passport. New cuisines, new spices, new stories—each recipe another stamp in your edible itinerary.",
+    shareSummary:
+      "New cuisines and spices—each recipe another stamp in your edible itinerary.",
   },
   comfort_seeker: {
     title: "THE COMFORT SEEKER",
     body:
       "You chased warmth in bowls and bubbling pans. Familiar flavors, gentle rituals, and meals that feel like coming home—every single time.",
+    shareSummary:
+      "Familiar flavors and gentle rituals—meals that feel like coming home, every single time.",
   },
   speed_chef: {
     title: "THE SPEED CHEF",
     body:
       "Thirty minutes or less, zero apologies. You optimized flavor per minute and proved fast food can still be real food.",
+    shareSummary:
+      "Thirty minutes or less—you optimized flavor per minute and proved fast food can still be real food.",
   },
 };
 
 const profileFromData = (data) =>
   PROFILE_CONTENT[data.cooking_style] || PROFILE_CONTENT.gastronaut;
 
-const getShareCardProps = (data) => {
-  const profile = profileFromData(data);
-  const groceryTripsAvoided = Math.round(data.meals / data.meals_per_grocery_shop);
-  const shoppingTimeSavedHours = Math.round((groceryTripsAvoided * data.mins_planning_shopping_per_trip) / 60);
-  return { profile, shoppingTimeSavedHours };
-};
-
 /** Full-bleed share card interior (Grain + gradients + column). */
-const ShareCardScene = ({ data, profile, shoppingTimeSavedHours }) => (
-  <>
+const ShareCardScene = ({ data, profile, shoppingTimeSavedHours, showExportCta }) => (
+  <div
+    style={{
+      position: "absolute",
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: showExportCta ? "auto" : 0,
+      width: "100%",
+      minHeight: "100%",
+      boxSizing: "border-box",
+    }}
+  >
     <Grain opacity={0.06} />
-    <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 20% 90%, rgba(196,98,45,0.15) 0%, transparent 50%)`, zIndex: 2, pointerEvents: "none" }} />
-    <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse at 85% 10%, rgba(45,74,62,0.35) 0%, transparent 55%)`, zIndex: 2, pointerEvents: "none" }} />
-    <div style={{ position: "relative", zIndex: 5, display: "flex", flexDirection: "column", height: "100%", gap: 10, paddingBottom: 10, overflow: "hidden" }}>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 10, flexShrink: 0 }}>
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        background: `radial-gradient(ellipse at 20% 90%, rgba(196,98,45,0.15) 0%, transparent 50%)`,
+        zIndex: 2,
+        pointerEvents: "none",
+      }}
+    />
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        background: `radial-gradient(ellipse at 85% 10%, rgba(45,74,62,0.35) 0%, transparent 55%)`,
+        zIndex: 2,
+        pointerEvents: "none",
+      }}
+    />
+    <div
+      style={{
+        position: "relative",
+        zIndex: 5,
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100%",
+        gap: 10,
+        padding: "0 4px",
+        paddingBottom: showExportCta ? 14 : 12,
+        overflow: showExportCta ? "visible" : "hidden",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 8, flexShrink: 0, paddingTop: 2 }}>
         <FreshPlateLogo color="rgba(245,240,232,0.95)" size={1.25} hideSubtitle />
         <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 24, color: "rgba(245,240,232,0.45)", lineHeight: 1.1 }}>Your 2025 Harvest</div>
         <div style={{ width: "100%", height: 1, background: "linear-gradient(90deg, transparent, rgba(245,240,232,0.2), transparent)" }} />
       </div>
 
-      <div style={{ background: "rgba(245,240,232,0.07)", borderRadius: 12, padding: "10px 14px", border: "1px solid rgba(245,240,232,0.1)", flexShrink: 0 }}>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, color: "rgba(245,240,232,0.4)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 3 }}>Persona</div>
+      <div style={{ background: "rgba(245,240,232,0.07)", borderRadius: 12, padding: "10px 14px 12px", border: "1px solid rgba(245,240,232,0.1)", flexShrink: 0 }}>
+        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, color: "rgba(245,240,232,0.4)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 2 }}>Persona</div>
         <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 20, color: "#F5F0E8", lineHeight: 1.15 }}>{profile.title}</div>
+        <p
+          style={{
+            margin: 0,
+            marginTop: 6,
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 13,
+            fontStyle: "italic",
+            fontWeight: 400,
+            color: "rgba(245,240,232,0.5)",
+            lineHeight: 1.45,
+          }}
+        >
+          {profile.shareSummary ?? profile.body}
+        </p>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -109,41 +167,95 @@ const ShareCardScene = ({ data, profile, shoppingTimeSavedHours }) => (
         ))}
       </div>
 
-      <div style={{ background: "rgba(45,74,62,0.35)", borderRadius: 12, padding: "12px 14px", border: "1px solid rgba(245,240,232,0.1)", flexShrink: 0, marginTop: "auto" }}>
-        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 9, color: "rgba(245,240,232,0.45)", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 5 }}>Favorite meal</div>
-        <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 18, color: "#F5F0E8", lineHeight: 1.2 }}>{data.favorite_meal}</div>
-      </div>
-
+      {/* Favorite + hero image in one compact block (label overlaid on dark bar at bottom). */}
       <div
+        role="img"
+        aria-label={`${data.favorite_meal} dish`}
         style={{
           position: "relative",
-          height: 100,
+          width: "100%",
+          height: 124,
           borderRadius: 12,
           overflow: "hidden",
           flexShrink: 0,
           boxShadow: "0 6px 20px rgba(0,0,0,0.25)",
+          backgroundColor: "#141414",
+          backgroundImage: `url("${FAVORITE_MEAL_HERO_IMAGE}")`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
         }}
       >
-        <img
-          src={FAVORITE_MEAL_HERO_IMAGE}
-          alt={`${data.favorite_meal} dish`}
-          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }}
-        />
         <div
           style={{
             position: "absolute",
             inset: 0,
-            background: "linear-gradient(180deg, rgba(26,26,26,0.18) 0%, rgba(26,26,26,0.42) 100%)",
+            background: "linear-gradient(180deg, rgba(26,26,26,0.12) 0%, rgba(26,26,26,0.2) 45%, rgba(10,10,10,0.55) 100%)",
             pointerEvents: "none",
           }}
         />
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            padding: "8px 12px 10px",
+            background: "linear-gradient(180deg, transparent 0%, rgba(10,10,10,0.92) 28%, rgba(10,10,10,0.97) 100%)",
+            pointerEvents: "none",
+          }}
+        >
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 8, color: "rgba(245,240,232,0.55)", textTransform: "uppercase", letterSpacing: 1.4, marginBottom: 2 }}>
+            Favorite meal
+          </div>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 700, fontSize: 17, color: "#F5F0E8", lineHeight: 1.15, letterSpacing: -0.2 }}>{data.favorite_meal}</div>
+        </div>
       </div>
 
       <div style={{ display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
         <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, color: "rgba(245,240,232,0.28)", letterSpacing: 1.2 }}>#FreshPlate2025</span>
       </div>
+
+      <div
+        style={{
+          opacity: showExportCta ? 1 : 0,
+          maxHeight: showExportCta ? 500 : 0,
+          overflow: "hidden",
+          flexShrink: 0,
+          background: "#1A1A1A",
+          border: "1px solid #C4622D",
+          borderRadius: 8,
+          padding: 12,
+          margin: 8,
+          textAlign: "center",
+          pointerEvents: "none",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontStyle: "italic",
+            fontSize: 16,
+            color: "#F5F0E8",
+            lineHeight: 1.25,
+          }}
+        >
+          Try FreshPlate today
+        </div>
+        <div
+          style={{
+            fontFamily: "'Inter', sans-serif",
+            fontSize: 11,
+            color: "rgba(245,240,232,0.6)",
+            lineHeight: 1.4,
+            marginTop: 6,
+          }}
+        >
+          Use code HARVEST2025 for 15% off your first box
+        </div>
+      </div>
     </div>
-  </>
+  </div>
 );
 
 const FRESHPLATE_SHARE_URL = "https://freshplate.com/wrapped/2025";
@@ -158,218 +270,66 @@ const downloadPngBlob = (blob, filename = "freshplate-2025-wrapped.png") => {
 };
 
 const SHARE_EXPORT_BG = "#0A0A0A";
-/** Logical size (all drawing uses this coordinate space). */
-const SHARE_CANVAS_W = 390;
-const SHARE_CANVAS_H = 720;
-/** Physical pixel size @2x for sharp exports. */
-const SHARE_CANVAS_PIXEL_W = 780;
-const SHARE_CANVAS_PIXEL_H = 1440;
 
-function loadImageCors(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Share image could not be loaded"));
-    img.src = src;
+/** html2canvas uses the element's layout box by default; descendants that extend past it (e.g. export CTA) get clipped unless width/height include them. */
+function captureSubtreeOuterSize(rootEl) {
+  const rootRect = rootEl.getBoundingClientRect();
+  let maxBottom = rootRect.bottom;
+  let maxRight = rootRect.right;
+  rootEl.querySelectorAll("*").forEach((node) => {
+    if (!(node instanceof HTMLElement)) return;
+    const cr = node.getBoundingClientRect();
+    const cs = getComputedStyle(node);
+    const mb = parseFloat(cs.marginBottom) || 0;
+    const mr = parseFloat(cs.marginRight) || 0;
+    maxBottom = Math.max(maxBottom, cr.bottom + mb);
+    maxRight = Math.max(maxRight, cr.right + mr);
   });
+  const width = Math.ceil(Math.max(rootRect.width, maxRight - rootRect.left));
+  const height = Math.ceil(Math.max(rootRect.height, maxBottom - rootRect.top)) + 12;
+  return { width, height };
 }
 
-function roundRectPath(ctx, x, y, w, h, r) {
-  const t = Math.min(r, w / 2, h / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + t, y);
-  ctx.lineTo(x + w - t, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + t);
-  ctx.lineTo(x + w, y + h - t);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - t, y + h);
-  ctx.lineTo(x + t, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - t);
-  ctx.lineTo(x, y + t);
-  ctx.quadraticCurveTo(x, y, x + t, y);
-  ctx.closePath();
-}
-
-async function buildFreshPlateSharePngBlob(data, profile, shoppingTimeSavedHours) {
+/**
+ * Captures the live share card DOM. Toggles export CTA via React state (so re-renders do not wipe styles),
+ * relaxes frame overflow so the CTA is not clipped, waits 200ms, then runs html2canvas at scale 2.
+ */
+async function captureShareCardToPngBlob(captureEl, frameEl, setShowExportCta) {
   await document.fonts.ready;
   try {
-    await document.fonts.load('700 24px "Playfair Display"');
-    await document.fonts.load('700 18px "Playfair Display"');
-    await document.fonts.load('500 13px Inter');
+    await document.fonts.load('italic 600 16px "Playfair Display"');
+    await document.fonts.load('400 11px Inter');
   } catch {
     /* fall back to system fonts */
   }
 
-  const hero = await loadImageCors(FAVORITE_MEAL_HERO_IMAGE);
+  const prevFrameOverflow = frameEl.style.overflow;
+  const prevCaptureOverflow = captureEl.style.overflow;
+  frameEl.style.overflow = "visible";
+  captureEl.style.overflow = "visible";
 
-  const canvas = document.createElement("canvas");
-  canvas.width = SHARE_CANVAS_PIXEL_W;
-  canvas.height = SHARE_CANVAS_PIXEL_H;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas not supported");
-  ctx.scale(2, 2);
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
+  flushSync(() => setShowExportCta(true));
 
-  ctx.fillStyle = SHARE_EXPORT_BG;
-  ctx.fillRect(0, 0, SHARE_CANVAS_W, SHARE_CANVAS_H);
+  await new Promise((resolve) => setTimeout(resolve, 200));
 
-  const pad = 24;
-  let y = 28;
-
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
-  ctx.fillStyle = PALETTE.cream;
-  ctx.font = '700 24px "Playfair Display", Georgia, "Times New Roman", serif';
-  ctx.fillText("FreshPlate", SHARE_CANVAS_W / 2, y);
-  y += 30;
-
-  ctx.fillStyle = "rgba(245,240,232,0.45)";
-  ctx.font = '600 16px "Playfair Display", Georgia, serif';
-  ctx.fillText("Your 2025 Harvest", SHARE_CANVAS_W / 2, y);
-  y += 28;
-
-  ctx.strokeStyle = "rgba(245,240,232,0.2)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(pad, y);
-  ctx.lineTo(SHARE_CANVAS_W - pad, y);
-  ctx.stroke();
-  y += 18;
-
-  ctx.textAlign = "left";
-  ctx.fillStyle = "rgba(245,240,232,0.4)";
-  ctx.font = '500 10px Inter, system-ui, sans-serif';
-  ctx.fillText("PERSONA", pad, y);
-  y += 16;
-
-  ctx.fillStyle = PALETTE.cream;
-  ctx.font = '700 17px "Playfair Display", Georgia, serif';
-  const titleLines = wrapCanvasText(ctx, profile.title, SHARE_CANVAS_W - pad * 2);
-  for (const line of titleLines) {
-    ctx.fillText(line, pad, y);
-    y += 22;
+  try {
+    const { width, height } = captureSubtreeOuterSize(captureEl);
+    const canvas = await html2canvas(captureEl, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: SHARE_EXPORT_BG,
+      logging: false,
+      width,
+      height,
+    });
+    return await new Promise((resolve, reject) => {
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("PNG export failed"))), "image/png");
+    });
+  } finally {
+    flushSync(() => setShowExportCta(false));
+    frameEl.style.overflow = prevFrameOverflow;
+    captureEl.style.overflow = prevCaptureOverflow;
   }
-  y += 10;
-
-  const statGap = 10;
-  const colW = (SHARE_CANVAS_W - pad * 2 - statGap) / 2;
-  const statH = 68;
-  const stats = [
-    { val: String(data.meals), lbl: "MEALS COOKED", color: PALETTE.terracotta },
-    { val: String(data.recipes), lbl: "RECIPES LEARNED", color: PALETTE.cream },
-    { val: `${shoppingTimeSavedHours}hrs`, lbl: "SAVED ON SHOPPING", color: PALETTE.terracotta },
-    { val: `${data.co2_saved} kg`, lbl: "CO₂ SAVED", color: "#8FB5A3" },
-  ];
-
-  const statStartY = y;
-  stats.forEach((s, i) => {
-    const row = Math.floor(i / 2);
-    const col = i % 2;
-    const x = pad + col * (colW + statGap);
-    const yy = statStartY + row * (statH + statGap);
-
-    ctx.fillStyle = "rgba(245,240,232,0.06)";
-    roundRectPath(ctx, x, yy, colW, statH, 10);
-    ctx.fill();
-    roundRectPath(ctx, x, yy, colW, statH, 10);
-    ctx.strokeStyle = "rgba(245,240,232,0.08)";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.fillStyle = s.color;
-    ctx.textAlign = "left";
-    ctx.font = '700 21px "Playfair Display", Georgia, serif';
-    ctx.fillText(s.val, x + 12, yy + 12);
-
-    ctx.fillStyle = "rgba(245,240,232,0.55)";
-    ctx.font = '500 9px Inter, system-ui, sans-serif';
-    ctx.fillText(s.lbl, x + 12, yy + 40);
-  });
-  y = statStartY + 2 * (statH + statGap) + 14;
-
-  const favH = 54;
-  ctx.fillStyle = "rgba(45,74,62,0.45)";
-  roundRectPath(ctx, pad, y, SHARE_CANVAS_W - pad * 2, favH, 12);
-  ctx.fill();
-  roundRectPath(ctx, pad, y, SHARE_CANVAS_W - pad * 2, favH, 12);
-  ctx.strokeStyle = "rgba(245,240,232,0.1)";
-  ctx.lineWidth = 1;
-  ctx.stroke();
-
-  ctx.fillStyle = "rgba(245,240,232,0.45)";
-  ctx.font = '500 9px Inter, system-ui, sans-serif';
-  ctx.textAlign = "left";
-  ctx.fillText("FAVORITE MEAL", pad + 12, y + 10);
-
-  ctx.fillStyle = PALETTE.cream;
-  ctx.font = '700 17px "Playfair Display", Georgia, serif';
-  ctx.fillText(data.favorite_meal, pad + 12, y + 26);
-  y += favH + 12;
-
-  const photoH = 118;
-  const photoW = SHARE_CANVAS_W - pad * 2;
-  ctx.save();
-  roundRectPath(ctx, pad, y, photoW, photoH, 12);
-  ctx.clip();
-
-  const scale = Math.max(photoW / hero.width, photoH / hero.height);
-  const dw = hero.width * scale;
-  const dh = hero.height * scale;
-  const dx = pad + (photoW - dw) / 2;
-  const dy = y + (photoH - dh) / 2;
-  ctx.drawImage(hero, dx, dy, dw, dh);
-  ctx.restore();
-
-  const grad = ctx.createLinearGradient(0, y, 0, y + photoH);
-  grad.addColorStop(0, "rgba(26,26,26,0.15)");
-  grad.addColorStop(1, "rgba(26,26,26,0.4)");
-  ctx.fillStyle = grad;
-  roundRectPath(ctx, pad, y, photoW, photoH, 12);
-  ctx.fill();
-
-  y += photoH + 14;
-
-  ctx.textAlign = "right";
-  ctx.fillStyle = "rgba(245,240,232,0.28)";
-  ctx.font = '500 10px Inter, system-ui, sans-serif';
-  ctx.fillText("#FreshPlate2025", SHARE_CANVAS_W - pad, y);
-
-  const bannerH = 96;
-  /** Lift banner above bottom so IG captions / UI don’t cover it (~80px clear band). */
-  const bannerBottomMargin = 80;
-  const bannerY = SHARE_CANVAS_H - bannerH - bannerBottomMargin;
-  ctx.fillStyle = PALETTE.terracotta;
-  ctx.fillRect(0, bannerY, SHARE_CANVAS_W, bannerH);
-
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = '700 18px "Playfair Display", Georgia, serif';
-  ctx.fillText("Try FreshPlate today", SHARE_CANVAS_W / 2, bannerY + 26);
-
-  ctx.font = '400 13px Inter, system-ui, sans-serif';
-  ctx.fillText("Use code HARVEST2025 for 15% off your first box", SHARE_CANVAS_W / 2, bannerY + 56);
-
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("PNG export failed"))), "image/png");
-  });
-}
-
-/** Simple word-wrap for canvas single-line font metrics. */
-function wrapCanvasText(ctx, text, maxWidth) {
-  const words = text.split(/\s+/);
-  const lines = [];
-  let line = "";
-  for (const w of words) {
-    const next = line ? `${line} ${w}` : w;
-    if (ctx.measureText(next).width <= maxWidth) line = next;
-    else {
-      if (line) lines.push(line);
-      line = w;
-    }
-  }
-  if (line) lines.push(line);
-  return lines.length ? lines : [text];
 }
 
 const Grain = ({ opacity = 0.04 }) => {
@@ -437,7 +397,7 @@ const FreshPlateLogo = ({ color = PALETTE.ink, size = 1, hideSubtitle = false })
   );
 };
 
-const slides = (data) => {
+const slides = (data, showExportCta) => {
   const profile = profileFromData(data);
   const takeoutIfOrdered = data.meals * TAKEOUT_KG_PER_MEAL;
   const mealsPerWeek = (data.meals / 52).toFixed(1);
@@ -742,7 +702,7 @@ const slides = (data) => {
       progressBarTheme: "dark",
       logoOnDark: true,
       render: () => (
-        <ShareCardScene data={data} profile={profile} shoppingTimeSavedHours={shoppingTimeSavedHours} />
+        <ShareCardScene data={data} profile={profile} shoppingTimeSavedHours={shoppingTimeSavedHours} showExportCta={showExportCta} />
       ),
     },
   ];
@@ -755,9 +715,12 @@ export default function App() {
   const touchStart = useRef(null);
   const [shareLoading, setShareLoading] = useState(false);
   const [copyToast, setCopyToast] = useState(false);
+  const shareCaptureRef = useRef(null);
+  const shareCardFrameRef = useRef(null);
+  const [shareSnapshotShowCta, setShareSnapshotShowCta] = useState(false);
 
   const data = WRAPPED_DATA;
-  const allSlides = slides(data);
+  const allSlides = slides(data, shareSnapshotShowCta);
 
   const goTo = (nextIdx) => {
     if (nextIdx < 0 || nextIdx >= allSlides.length) return;
@@ -787,8 +750,10 @@ export default function App() {
 
     setShareLoading(true);
     try {
-      const { profile: shareProfile, shoppingTimeSavedHours: shareShoppingHrs } = getShareCardProps(data);
-      const blob = await buildFreshPlateSharePngBlob(data, shareProfile, shareShoppingHrs);
+      const captureEl = shareCaptureRef.current;
+      const frameEl = shareCardFrameRef.current;
+      if (!captureEl || !frameEl) throw new Error("Share card not ready");
+      const blob = await captureShareCardToPngBlob(captureEl, frameEl, setShareSnapshotShowCta);
       const file = new File([blob], "freshplate-2025-wrapped.png", { type: "image/png" });
 
       if (!navigator.share) {
@@ -829,7 +794,7 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", background: PALETTE.ink, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&display=swap');
         * { box-sizing:border-box; margin:0; padding:0; }
         @keyframes spin { to { transform: rotate(360deg); } }
         button{cursor:pointer;border:none;transition:opacity .15s,transform .1s}
@@ -840,6 +805,7 @@ export default function App() {
       <div style={{ width: "100%", maxWidth: 390 }}>
         <div>
           <div
+            ref={shareCardFrameRef}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
             style={{
@@ -852,6 +818,7 @@ export default function App() {
             }}
           >
             <div
+              ref={shareCaptureRef}
               style={{
                 position: "absolute",
                 inset: 0,
